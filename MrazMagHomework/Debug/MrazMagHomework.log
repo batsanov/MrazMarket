@@ -1,8 +1,11 @@
-﻿  EventHandler.h
-E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(185,60): warning C4018: '>': signed/unsigned mismatch
-  main.cpp
-E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(185,60): warning C4018: '>': signed/unsigned mismatch
-E:\Visual studio\MrazMagHomework\MrazMagHomework\main.cpp(13,23): warning C4018: '<': signed/unsigned mismatch
+﻿  main.cpp
+E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(209,60): warning C4018: '>': signed/unsigned mismatch
+E:\Visual studio\MrazMagHomework\MrazMagHomework\main.cpp(19,23): warning C4018: '<': signed/unsigned mismatch
+  MrazMarket.cpp
+E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(209,60): warning C4018: '>': signed/unsigned mismatch
+E:\Visual studio\MrazMagHomework\MrazMagHomework\MrazMarket.cpp(17,164): warning C4018: '<=': signed/unsigned mismatch
+E:\Visual studio\MrazMagHomework\MrazMagHomework\MrazMarket.cpp(25,23): warning C4018: '<': signed/unsigned mismatch
+  EventHandler.h
+E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(209,60): warning C4018: '>': signed/unsigned mismatch
   Generating Code...
-E:\Visual studio\MrazMagHomework\MrazMagHomework\EventHandler.h(16): warning C4715: 'EventHandler::getNextEvent': not all control paths return a value
   MrazMagHomework.vcxproj -> E:\Visual studio\MrazMagHomework\Debug\MrazMagHomework.exe

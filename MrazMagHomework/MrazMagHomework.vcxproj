@@ -141,6 +141,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Customer.h" />
+    <ClInclude Include="interface.h" />
+    <ClInclude Include="LinkedQueue.h" />
     <ClInclude Include="MrazMarket.h" />
     <ClInclude Include="PQueue.h" />
     <ClInclude Include="Worker.h" />

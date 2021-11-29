@@ -1,21 +1,22 @@
+#pragma once
 #include "MrazMarket.h"
 
 struct EventHandler {
-	int getNextEvent(MrazMarket& market)  // return a -> 1 , b -> 2, c -> 3
+	static int getNextEvent(MrazMarket& market)  // return a -> 1 , b -> 2, c -> 3
 	{
-		int a = market.customersByArival.isEmpty() ? 1500 : market.customersByArival.first().minuteOfArival;
+		int a = market.customersToArive.isEmpty() ? 1500 : market.customersToArive.first().arriveMinute;
 		int b = market.customersByDeparture.isEmpty() ? 1500 : market.customersByDeparture.first().getLeavingTime();
 		int c = market.workersStocking.isEmpty() ? 1500 : market.workersStocking.first().minuteOfLeaving + 60;
-		if (a < b && a < c)
+		if (a <= b && a <= c)
 			return 1;
-		else if (b < a && b < c)
+		else if (b <= a && b <= c)
 			return 2;
-		else if (c < a && c < b)
+		else if (c <= a && c <= b)
 			return 3;
-
+		return 0;
 	};
 
-	void handleNextEvent(MrazMarket& market)
+	static void handleNextEvent(MrazMarket& market)
 	{
 		switch (getNextEvent(market))
 		{
@@ -28,99 +29,121 @@ struct EventHandler {
 		case 3:
 			returnWorker(market);
 			break;
-		default:
-			break;
 		}
 	}
 
 
-	void firstCustomerBuy(MrazMarket& market, int time) {
-		const Customer* customer = &(market.customersByDeparture.first());
-		int wantedBananas = market.customersByDeparture.first().numberOfBananas;
-		int wantedSchweppes = market.customersByDeparture.first().numberOfSchweppes;
+	static void firstCustomerBuy(MrazMarket& market, int time) {
+		Customer* customer = &market.waitingForRestocking.back();  
+		int wantedbanana = customer->banana;
+		int wantedSchweppes = customer->schweppes;
 
-		if (wantedBananas <= market.bananas && wantedSchweppes <= market.schweppes)
+		if (wantedbanana <= market.banana && wantedSchweppes <= market.schweppes)
 		{
-			market.bananas -= wantedBananas;
+			market.banana -= wantedbanana;
 			market.schweppes -= wantedSchweppes;
-			customer->announceLeaving(time, wantedBananas, wantedSchweppes);
-			market.customersByDeparture.dequeue();
+			customer->announceLeaving(time, wantedbanana, wantedSchweppes);
+			market.waitingForRestocking.pop_back();
+			
 		}
 		
 	};
 
 
-	void returnWorker(MrazMarket& market) {                        
+	static void returnWorker(MrazMarket& market) {
 		const Worker* worker = &(market.workersStocking.first());
 		worker->announceComingBack();
-		if (worker->item == "banana") market.bananas += 100;
+		if (worker->item == ResourceType::banana) market.banana += 100;
 		else market.schweppes += 100;
+
+		firstCustomerBuy(market, worker->minuteOfLeaving + 60);
 		
-		firstCustomerBuy(market, worker->minuteOfLeaving + 60);       // искам да обслужа този с най-малко id
+
 		market.workersStocking.dequeue();
 		market.availableWorkers++;
 
 	}
 
-	void leaveCustomer(MrazMarket& market) {
+	static bool removeIfWaiting(MrazMarket& market, Customer cust) {
+		for (size_t i = 0; i < market.waitingForRestocking.size(); i++)
+		{
+			if (market.waitingForRestocking[i].id == cust.id)
+			{
+				market.waitingForRestocking.erase(market.waitingForRestocking.begin() + i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static void leaveCustomer(MrazMarket& market) {
 
 		const Customer* customer = &(market.customersByDeparture.first());
-		int wantedBananas = market.customersByDeparture.first().numberOfBananas;
-		int wantedSchweppes = market.customersByDeparture.first().numberOfSchweppes;
-		
-		if (wantedBananas <= market.bananas && wantedSchweppes > market.schweppes)
+		int wantedbanana = customer->banana;
+		int wantedSchweppes = customer->schweppes;
+		if (removeIfWaiting(market, *customer))
 		{
-			customer->announceLeaving(customer->getLeavingTime(), wantedBananas ,market.schweppes);
-			market.bananas -= wantedBananas;
-			market.schweppes = 0;
-			
-		}
-		else if (wantedBananas > market.bananas && wantedSchweppes <= market.schweppes)
-		{
-			customer->announceLeaving(customer->getLeavingTime(), market.bananas, wantedSchweppes);
-			market.schweppes -= wantedSchweppes;
-			market.bananas = 0;
-		}
-		else
-		{
-			customer->announceLeaving(customer->getLeavingTime(), market.bananas, market.schweppes);
-			market.schweppes = 0;
-			market.bananas = 0;
+			if (wantedbanana <= market.banana && wantedSchweppes <= market.schweppes)
+			{
+				customer->announceLeaving(customer->getLeavingTime(), wantedbanana, wantedSchweppes);
+				market.banana -= wantedbanana;
+				market.schweppes -= wantedSchweppes;
+			}
+			if (wantedbanana <= market.banana && wantedSchweppes > market.schweppes)
+			{
+				customer->announceLeaving(customer->getLeavingTime(), wantedbanana, market.schweppes);
+				market.banana -= wantedbanana;
+				market.schweppes = 0;
+
+			}
+			else if (wantedbanana > market.banana && wantedSchweppes <= market.schweppes)
+			{
+				customer->announceLeaving(customer->getLeavingTime(), market.banana, wantedSchweppes);
+				market.schweppes -= wantedSchweppes;
+				market.banana = 0;
+			}
+			else
+			{
+				customer->announceLeaving(customer->getLeavingTime(), market.banana, market.schweppes);
+				market.schweppes = 0;
+				market.banana = 0;
+			}
 		}
 		market.customersByDeparture.dequeue();
 	}
 
-	void serveCustomer(MrazMarket& market)
+	static void serveCustomer(MrazMarket& market)
 	{
-		const Customer* customer = &(market.customersByArival.first());
-		int wantedBananas = market.customersByArival.first().numberOfBananas;
-		int wantedSchweppes = market.customersByArival.first().numberOfSchweppes;
-		if (wantedBananas <= market.bananas && wantedSchweppes <= market.schweppes)
+		const Customer* customer = &(market.customersToArive.first());
+		int wantedbanana = customer->banana;
+		int wantedSchweppes = customer->schweppes;
+		if (wantedbanana <= market.banana && wantedSchweppes <= market.schweppes)
 		{
 		   
-			market.bananas -= wantedBananas;
+			market.banana -= wantedbanana;
 			market.schweppes -= wantedSchweppes;
-			customer->announceLeaving(customer->minuteOfArival, wantedBananas, wantedSchweppes);
+			customer->announceLeaving(customer->arriveMinute, wantedbanana, wantedSchweppes);
 			market.customersByDeparture.dequeue();
 		}
 		else
 		{
+			market.waitingForRestocking.insert(market.waitingForRestocking.begin(), *customer);
 			if (market.availableWorkers > 0)
 			{
-				if (wantedBananas <= market.bananas && wantedSchweppes > market.schweppes)
+				if (wantedbanana <= market.banana && wantedSchweppes > market.schweppes)
 				{
-					if (!isBeingShippedBefore(market, "schweppes", customer->getLeavingTime()))
+					if (!isBeingShippedBefore(market, ResourceType::schweppes, customer->getLeavingTime()))
 					{
-						sendWorker(market, customer->minuteOfArival, "schweppes");
+						sendWorker(market, customer->arriveMinute, ResourceType::schweppes);
 						market.availableWorkers--;
 					}
 					
 				}
-				else if (wantedBananas > market.bananas && wantedSchweppes <= market.schweppes)
+				else if (wantedbanana > market.banana && wantedSchweppes <= market.schweppes)
 				{
-					if (!isBeingShippedBefore(market,"banana",customer->getLeavingTime()))
+					if (!isBeingShippedBefore(market, ResourceType::banana,customer->getLeavingTime()))
 					{
-						sendWorker(market, customer->minuteOfArival, "banana");
+						sendWorker(market, customer->arriveMinute, ResourceType::banana);
 						market.availableWorkers--;
 					}
 				}
@@ -128,43 +151,43 @@ struct EventHandler {
 				{
 					if (market.availableWorkers > 1)
 					{
-						if (!isBeingShippedBefore(market, "banana", customer->getLeavingTime()))
+						if (!isBeingShippedBefore(market, ResourceType::banana, customer->getLeavingTime()))
 						{
-							sendWorker(market, customer->minuteOfArival, "banana");
+							sendWorker(market, customer->arriveMinute, ResourceType::banana);
 							market.availableWorkers--;
 						}
-						if (!isBeingShippedBefore(market, "schweppes", customer->getLeavingTime()))
+						if (!isBeingShippedBefore(market, ResourceType::schweppes, customer->getLeavingTime()))
 						{
-							sendWorker(market, customer->minuteOfArival, "schweppes");
+							sendWorker(market, customer->arriveMinute, ResourceType::schweppes);
 							market.availableWorkers--;
 						}
 					}
 					else
 					{
-						if (wantedBananas == wantedSchweppes)
+						if (wantedbanana == wantedSchweppes)
 						{
 
-							if (!isBeingShippedBefore(market, "banana", customer->getLeavingTime()))
+							if (!isBeingShippedBefore(market, ResourceType::banana, customer->getLeavingTime()))
 							{
-								sendWorker(market, customer->minuteOfArival, "banana");
+								sendWorker(market, customer->arriveMinute, ResourceType::banana);
 								market.availableWorkers--;
 							}
 						}
 						else
 						{
-							if (wantedBananas > wantedSchweppes)
+							if (wantedbanana > wantedSchweppes)
 							{
-								if (!isBeingShippedBefore(market, "banana", customer->getLeavingTime()))
+								if (!isBeingShippedBefore(market, ResourceType::banana, customer->getLeavingTime()))
 								{
-									sendWorker(market, customer->minuteOfArival, "banana");
+									sendWorker(market, customer->arriveMinute, ResourceType::banana);
 									market.availableWorkers--;
 								}
 							}
 							else
 							{
-								if (!isBeingShippedBefore(market, "schweppes", customer->getLeavingTime()))
+								if (!isBeingShippedBefore(market, ResourceType::schweppes, customer->getLeavingTime()))
 								{
-									sendWorker(market, customer->minuteOfArival, "schweppes");
+									sendWorker(market, customer->arriveMinute, ResourceType::schweppes);
 									market.availableWorkers--;
 								}
 							}
@@ -173,11 +196,12 @@ struct EventHandler {
 				}
 
 			}
+			
 		}
-		market.customersByArival.dequeue();
+		market.customersToArive.dequeue();
 	}
 
-	bool isBeingShippedBefore(MrazMarket& market, std::string item, int time) {  // тромаво
+	static bool isBeingShippedBefore(MrazMarket& market, ResourceType item, int time) {
 		PQueue<Worker> temp;
 		bool flag = false;
 		while (!market.workersStocking.isEmpty())
@@ -207,7 +231,7 @@ struct EventHandler {
 		return flag;
 	};
 
-	void sendWorker(MrazMarket& market, int time,std::string item)
+	static void sendWorker(MrazMarket& market, int time,ResourceType item)
 	{
 		Worker worker(time, item);
 		worker.announceLeaving();

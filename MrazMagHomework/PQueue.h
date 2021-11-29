@@ -21,6 +21,8 @@ public:
 	PQueue& operator=(const PQueue& other);
 	~PQueue() { clear(); };
 
+
+
 	void dequeue()
 	{
 		
@@ -34,7 +36,6 @@ public:
 			delete temp;
 		}
 	}
-
 
 	void insert(T data, int priority)
 	{
@@ -55,6 +56,8 @@ public:
 			it->next = temp;
 		}
 	}
+
+
 	const T& first();
 
 	bool isEmpty()const { return begin == nullptr; };

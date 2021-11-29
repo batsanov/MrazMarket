@@ -4,7 +4,13 @@
 #include "PQueue.h"
 #include "EventHandler.h"
 
+Store* createStore() {
+	return new MrazMarket();
+}
+
 size_t Customer::counter = 0;
+
+
 void getInput(MrazMarket* market) {
 	int numberOfWorkers, numberOfCustomers;
 	std::cin >> numberOfWorkers >> numberOfCustomers;
@@ -14,28 +20,30 @@ void getInput(MrazMarket* market) {
 	{
 		Customer customer;
 		std::cin >> customer;
-		market->pushCustomerByArival(customer);
+		market->pushCustomerToArive(customer);
 		market->pushCustomerByDeparture(customer);
 	}
 }
 
 void start(MrazMarket* market)
 {
-	EventHandler handler;
+	
 	while (!market->customersByDeparture.isEmpty())
 	{
-		handler.handleNextEvent(*market);
+		EventHandler::handleNextEvent(*market);
 	}
 };
 
 int main()
 {
-	MrazMarket* market = market->createMarket();
+	MrazMarket* market = new MrazMarket();
 	getInput(market);
 	std::cout << std::endl;
 	start(market);
 	
-	
 	return 0;
 }
 
+// PROBLEMO LINK UP BETWEEN EVENTHANDLER AND MRAZMARKET
+// TESTS 
+// MANY WAITING CLIENTS LOGIC ERR

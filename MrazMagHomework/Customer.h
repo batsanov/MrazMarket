@@ -1,24 +1,26 @@
 #pragma once
 #include <iostream>
-#include<string>
+#include "interface.h"
 
-struct Customer {
+
+struct Customer : Client {
 	static size_t counter;
-	
-	size_t minuteOfArival;
-	size_t numberOfBananas;
-	size_t numberOfSchweppes;
-	size_t maxWaitingMinutes;
 	size_t id;
 
 
-	Customer() { id = counter++; minuteOfArival = numberOfBananas = numberOfSchweppes = maxWaitingMinutes = 0; };
-	Customer(size_t arivalTime, size_t bananas, size_t schweppes, size_t waitingMins) :
-		minuteOfArival(arivalTime), numberOfBananas(bananas), numberOfSchweppes(schweppes), maxWaitingMinutes(waitingMins),id(counter++) {};
+	Customer() { id = counter++; arriveMinute = banana = schweppes = maxWaitTime = 0; };
+	Customer(int arivalTime, int  banana, int schweppes, int waitingMins) {
+		arriveMinute = arivalTime;
+		banana = banana;
+		schweppes = schweppes;
+		maxWaitTime = waitingMins;
+		id = counter++;
+	};
 	~Customer() = default;
+	
 	friend std::ostream& operator<<(std::ostream& out, const Customer& cust)
 	{
-		return out << cust.id << ". " << cust.minuteOfArival << " "  << cust.numberOfBananas << " " << cust.numberOfSchweppes << " " << cust.maxWaitingMinutes << std::endl;
+		return out << cust.id << ". " << cust.arriveMinute << " "  << cust.banana << " " << cust.schweppes << " " << cust.maxWaitTime << std::endl;
 	};
 	friend std::istream& operator>>(std::istream& is, Customer& obj)
 	{
@@ -45,20 +47,20 @@ struct Customer {
 		customerInformation[j] = currentParam;
 
 
-		obj.minuteOfArival = customerInformation[0];
-		obj.numberOfBananas = customerInformation[1];
-		obj.numberOfSchweppes = customerInformation[2];
-		obj.maxWaitingMinutes = customerInformation[3];
+		obj.arriveMinute = customerInformation[0];
+		obj.banana = customerInformation[1];
+		obj.schweppes = customerInformation[2];
+		obj.maxWaitTime = customerInformation[3];
 
 		return is;
 	};
 
 	int getLeavingTime() const
 	{
-		return (minuteOfArival + maxWaitingMinutes);
+		return (arriveMinute + maxWaitTime);
 	};
-	void announceLeaving(int minute, int bananas, int schweppes) const
+	void announceLeaving(int minute, int banana, int schweppes) const
 	{
-		std::cout << id << ". " << minute << " " << bananas << " " << schweppes << std::endl;
+		std::cout << id << ". " << minute << " " << banana << " " << schweppes << std::endl;
 	};
 };
